@@ -1,0 +1,77 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: airflow-gcp
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: airflow-gcp
+    spec:
+      containers:
+      - name: airflow-gcp
+        image: gcr.io/<<GCP_PROJECT>>/airflow-gcp:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: AIRFLOW__ADMIN
+          valueFrom:
+            secretKeyRef:
+              name: <<AIRFLOW_SECRETS_NAME>>
+              key: airflow__admin
+        - name: AIRFLOW__ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: <<AIRFLOW_SECRETS_NAME>>
+              key: airflow__admin_password
+        - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
+          valueFrom:
+            secretKeyRef:
+              name: <<AIRFLOW_SECRETS_NAME>>
+              key: airflow__core__sql_alchemy_conn
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "<<AIRFLOW__CORE__EXECUTOR>>"
+        - name: AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER
+          value: "<<AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER>>"
+        - name: GCP_PROJECT
+          value: "<<GCP_PROJECT>>"
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: <<AIRFLOW_SECRETS_NAME>>
+              key: postgres_host
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: <<AIRFLOW_SECRETS_NAME>>
+              key: postgres_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: <<AIRFLOW_SECRETS_NAME>>
+              key: postgres_password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-gcp
+spec:
+  type: ClusterIP   # use NodePort for IAP
+  ports:
+  - port: 8080
+  selector:
+    app: airflow-gcp
+
+# disable IAP temporarily since infra team is not ready
+# ---
+# apiVersion: extensions/v1beta1
+# kind: Ingress
+# metadata:
+#   name: airflow-gcp
+#   annotations:
+#     kubernetes.io/ingress.global-static-ip-name: airflow-gcp
+# spec:
+#   backend:
+#     serviceName: airflow-gcp
+#     servicePort: 8080

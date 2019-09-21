@@ -1,0 +1,4 @@
+## Reserved maintenance window 23:00 ~ 23:30
+## -- sync source / dags, restart airflow (airflow web UI)
+00 23 * * * <<AIRFLOW_HOME>>/ext/script/git_sync.sh all > <<AIRFLOW_HOME>>/logs/sync.log 2>&1
+25 23 * * * <<AIRFLOW_HOME>>/ext/script/git_src.sh register_dags
